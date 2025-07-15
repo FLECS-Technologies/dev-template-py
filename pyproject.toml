@@ -20,7 +20,7 @@ authors = [
 ]
 license = "MIT"
 requires-python = ">= 3.10" # Adjust based on the minimum version of Python that you support
-readme = {"file" = "README.md", "content-type" = "text/markdown"}
+readme = { "file" = "README.md", "content-type" = "text/markdown" }
 # Please consult https://pypi.org/classifiers/ for a full list.
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -97,16 +97,16 @@ line-length = 88
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "D107",  # 'Missing docstring in __init__' ignored because pydoclint wants us to document the class instead.
-    "D203",  # '1 blank line required before class docstring' ignored because we want no blank line.
-    "D212",  # 'Multi-line docstring summary should start at the first line' ignored because we want the summary to start on the second line.
-    "D407",  # 'Missing dashed underline after section' ignored because Google style docstrings don't underline.
-    "ANN101",  # 'Missing type annotation for {self} in method'.
-    "ANN102",  # 'Missing type annotation for {cls} in classmethod'.
-    "D413",  # 'Missing blank line after section' ignored .
-    "D401",  # 'First line should be in imperative mood' ignored
-    "ANN001",  # Missing type annotation for {arg} in function" ignored
-    "ANN201",  # 'Missing type annotation for {return}'.
+    "D107", # 'Missing docstring in __init__' ignored because pydoclint wants us to document the class instead.
+    "D203", # '1 blank line required before class docstring' ignored because we want no blank line.
+    "D212", # 'Multi-line docstring summary should start at the first line' ignored because we want the summary to start on the second line.
+    "D407", # 'Missing dashed underline after section' ignored because Google style docstrings don't underline.
+    "ANN101", # 'Missing type annotation for {self} in method'.
+    "ANN102", # 'Missing type annotation for {cls} in classmethod'.
+    "D413", # 'Missing blank line after section' ignored .
+    "D401", # 'First line should be in imperative mood' ignored
+    "ANN001", # Missing type annotation for {arg} in function" ignored
+    "ANN201", # 'Missing type annotation for {return}'.
 ]
 exclude = [
     "src/dev_template_py/_version.py",
@@ -114,15 +114,15 @@ exclude = [
 
 [tool.ruff.lint.extend-per-file-ignores]
 "__init__.py" = [
-    "E401",  # 'Multiple imports on one line'
-    "E402",  # 'Module level import not at top of file'
-    "F401",  # 'Imported but unused'
-    "I001",  # 'Import block is un-sorted or un-formatted' ignored because we may have to import in a particular, not-alphabetical order.
+    "E401", # 'Multiple imports on one line'
+    "E402", # 'Module level import not at top of file'
+    "F401", # 'Imported but unused'
+    "I001", # 'Import block is un-sorted or un-formatted' ignored because we may have to import in a particular, not-alphabetical order.
 ]
 "tests/**/*.py" = [
-    "S101",  # 'Use of assert detected' ignored because we are using pytest.
-    "INP001",  # 'Insecure input' ignored because we are testing.
-    "ANN201",  # 'Missing type annotation for {return}' ignored because all tests return `None`.
+    "S101", # 'Use of assert detected' ignored because we are using pytest.
+    "INP001", # 'Insecure input' ignored because we are testing.
+    "ANN201", # 'Missing type annotation for {return}' ignored because all tests return `None`.
 ]
 
 [tool.ruff.lint.isort]
@@ -137,23 +137,6 @@ arg-type-hints-in-docstring = true
 check-return-types = false
 check-yield-types = false
 exclude = "_version.py"
-# TODO: Adjust mypy configuration.
-#[tool.mypy]
-#plugins = [
-#    "pydantic.mypy",
-#]
-
-# Stop mypy from complaining about missing types from imports.
-#[[tool.mypy.overrides]]
-#module = [
-#    "pandas",
-#]
-#ignore_missing_imports = true
-
-#[tool.pydantic-mypy]
-#init_forbid_extra = true
-#init_typed = true
-#warn_required_dynamic_aliases = true
 
 # Use UV to create Hatch environments
 [tool.hatch.envs.default]
@@ -198,9 +181,27 @@ extra-dependencies = [
 python = ["3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.test.scripts]
-run = "pytest {args:--cov=dev_template_py --cov-report=term-missing}"
+run = "pytest {args:--cov=dev_template_py --cov-report=html}"
 
 #--------------- Build and preview your documentation ---------------#
+
+# This sets up a hatch environment with associated dependencies that need to be installed
+[tool.hatch.envs.docs]
+description = """Build or serve the documentation."""
+python = "3.10"
+dependencies = [
+    "pydata_sphinx_theme ~=0.16",
+    "myst-parser ~=4.0",
+    "Sphinx ~=8.0",
+    "sphinx-autobuild ==2024.10.3"
+]
+
+# This table contains the scripts that you can use to build and serve your docs
+# hatch run docs:build will build your documentation
+# hatch run docs:serve will serve them 'live' on your computer locally
+[tool.hatch.envs.docs.scripts]
+build = ["sphinx-apidoc -o docs/api src/dev_template_py", "sphinx-build {args:-W -b html docs docs/_build}"]
+serve = ["sphinx-apidoc -o docs/api src/dev_template_py", "sphinx-autobuild docs --watch src/dev_template_py {args:-b html docs/_build/serve}"]
 
 #--------------- Format & style your code ---------------#
 
