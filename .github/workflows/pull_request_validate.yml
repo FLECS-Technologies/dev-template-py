@@ -1,0 +1,121 @@
+name: Validate pull request
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest ]
+        python-version: [ "3.13" ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install hatch
+        uses: pypa/hatch@install
+
+      - name: Check code style
+        run: hatch run style:code
+
+      - name: Check docstrings
+        run: hatch run style:docstrings
+
+      - name: Build documentation
+        run: hatch run docs:build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: docs/_build/
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10", "3.13" ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install hatch
+        uses: pypa/hatch@install
+
+      - name: Check installation
+        run: hatch run build:check
+
+      - name: Check dependencies
+        run: hatch run audit:check
+      - name: Check types
+        run: hatch run types:check
+      - name: Test suite
+        run: hatch run +py=${{ matrix.python-version }} test:run
+  build:
+    runs-on: ubuntu-latest
+    # Environment is encouraged for increased security
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install hatch
+        uses: pypa/hatch@a3c83ab3d481fbc2dc91dd0088628817488dd1d5
+      - name: Build package using Hatch
+        run: |
+          hatch build
+          echo ""
+          echo "Generated files:"
+          ls -lh dist/
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+  determine_tag:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.define_tag.outputs.tag }}
+    steps:
+      - name: Define unique image tag
+        id: define_tag
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            TAG="pr-${{ github.event.pull_request.number }}"
+          else
+            TAG="commit-${GITHUB_SHA::7}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+  docker:
+    needs: [ determine_tag ]
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ needs.determine_tag.outputs.tag }}
+      registry: ${{ vars.DOCKER_REGISTRY }}
+      app_name: ${{ vars.APP_NAME }}
+      registry_namespace: ${{ vars.DOCKER_REGISTRY_NAMESPACE }}
+  docker_ghcr:
+    # Remove the following if statement to deploy to github container registry
+    if: false
+    needs: [ determine_tag ]
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ needs.determine_tag.outputs.tag }}
+      registry: ghcr.io
+      # Replace this with the lowercase name of the repository
+      app_name: dev-template-py
+      # Replace this with the lowercase name of your organization (or user)
+      registry_namespace: flecs-technologies

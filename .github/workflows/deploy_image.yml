@@ -1,0 +1,66 @@
+name: Deploy image
+run-name: Deploy image ${{ inputs.app_name }}:${{ inputs.tag }} to ${{ inputs.registry }}
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description: The tag the images should be deployed as, without architecture
+      registry:
+        type: string
+        required: false
+        default: true
+        description: The registry the image should be deployed to
+      app_name:
+        type: string
+        required: true
+        description: The app name which will be used as the images name
+      registry_namespace:
+        type: string
+        required: false
+        default: ""
+        description: The registry namespace the image should be deployed to, leave empty if no namespace is used
+    secrets:
+      username:
+        required: true
+        description: The username used to authenticate with the container registry
+      password:
+        required: true
+        description: The password used to authenticate with the container registry
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ inputs.app_name }}_${{ inputs.tag }}*
+          path: ${{ runner.temp }}
+          merge-multiple: 'true'
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ secrets.username }}
+          password: ${{ secrets.password }}
+      - name: Load and push images
+        env:
+          NAMESPACE: ${{ inputs.registry_namespace }}
+        run: |
+          NAMESPACE=${NAMESPACE:+$NAMESPACE/}
+          docker load -i ${{ runner.temp }}/${{ inputs.app_name }}_${{ inputs.tag }}_x86_64-unknown-linux-gnu.tar
+          docker load -i ${{ runner.temp }}/${{ inputs.app_name }}_${{ inputs.tag }}_aarch64-unknown-linux-gnu.tar
+          docker load -i ${{ runner.temp }}/${{ inputs.app_name }}_${{ inputs.tag }}_armv7-unknown-linux-gnueabihf.tar
+
+          docker push --platform linux/amd64 ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-amd64 
+          docker push --platform linux/arm64 ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-arm64
+          docker push --platform linux/arm/v7 ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-armhf
+
+          docker manifest create ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }} \
+            ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-amd64 \
+            ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-arm64 \
+            ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}-armhf
+
+          docker manifest push ${{ inputs.registry }}/${NAMESPACE}${{ inputs.app_name }}:${{ inputs.tag }}

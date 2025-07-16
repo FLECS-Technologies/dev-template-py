@@ -1,0 +1,32 @@
+name: Security audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '**/pyproject.toml'
+  pull_request:
+    branches:
+      - 'main'
+    paths:
+      - '**/pyproject.toml'
+  schedule:
+    - cron: '17 3 * * *'
+jobs:
+  security_audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install hatch
+        uses: pypa/hatch@install
+
+      - name: Check dependencies
+        run: hatch run audit:check

@@ -1,0 +1,37 @@
+name: Release
+run-name: Release ${{ github.event.release.tag_name }}
+on:
+  release:
+    types: [ published ]
+env:
+  REGISTRY: ghcr.io
+  # Replace this with the lowercase name of the repository
+  APP_NAME: dev-template-py
+  # Replace this with the lowercase name of your organization (or user)
+  REGISTRY_NAMESPACE: flecs-technologies
+jobs:
+  build_image:
+    # Remove the following if statement to deploy to GitHub container registry
+    if: false
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      registry: ${{ env.REGISTRY }}
+      app_name: ${{ env.APP_NAME }}
+      registry_namespace: ${{ env.REGISTRY_NAMESPACE }}
+  deploy_ghcr:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    needs: [ build_image ]
+    uses: ./.github/workflows/deploy_image.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      registry: ${{ env.REGISTRY }}
+      app_name: ${{ env.APP_NAME }}
+      registry_namespace: ${{ env.REGISTRY_NAMESPACE }}
+    secrets:
+      username: ${{ github.actor }}
+      password: ${{ secrets.GITHUB_TOKEN }}

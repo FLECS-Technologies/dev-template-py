@@ -1,0 +1,63 @@
+name: Build image
+run-name: Build image ${{ inputs.app_name }}:${{ inputs.tag }}
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+        description: The tag the resulting images should get without architecture
+      registry:
+        type: string
+        required: true
+        description: The registry the image should be built for
+      app_name:
+        type: string
+        required: true
+        description: The app name which will be used as the images name
+      registry_namespace:
+        type: string
+        required: false
+        default: ""
+        description: The namespace the image should be built for, leave empty if no namespace should be used
+jobs:
+  docker:
+    name: Build docker image
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: "x86_64-unknown-linux-gnu"
+            platform: linux/amd64
+            platform_short: amd64
+          - target: "aarch64-unknown-linux-gnu"
+            platform: linux/arm64
+            platform_short: arm64
+          - target: "armv7-unknown-linux-gnueabihf"
+            platform: linux/arm/v7
+            platform_short: armhf
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Setup Docker buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          platforms: ${{ matrix.platform }}
+      - id: namespace
+        env:
+          NAMESPACE: ${{ inputs.registry_namespace }}
+        run:
+          echo "namespace=${NAMESPACE:+$NAMESPACE/}" >> $GITHUB_OUTPUT
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          tags: ${{ inputs.registry }}/${{ steps.namespace.outputs.namespace }}${{ inputs.app_name }}:${{ inputs.tag }}-${{ matrix.platform_short }}
+          outputs: type=docker,dest=${{ runner.temp }}/${{ inputs.app_name }}_${{ inputs.tag }}_${{ matrix.target }}.tar
+          file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          build-args: TARGET="${{ matrix.target }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.app_name }}_${{ inputs.tag }}_${{ matrix.target }}
+          path: ${{ runner.temp }}/${{ inputs.app_name }}_${{ inputs.tag }}_${{ matrix.target }}.tar
