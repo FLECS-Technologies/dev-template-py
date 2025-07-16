@@ -1,0 +1,37 @@
+version: 1
+disable_existing_loggers: False
+filters:
+  bellow_error_filter:
+    (): dev_template_py.server.BelowErrorFilter
+formatters:
+  default:
+    format: '%(asctime)s %(levelname)s %(name)s: %(message)s'
+handlers:
+  default:
+    formatter: default
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+    level: INFO
+    filters: [ bellow_error_filter ]
+  errors:
+    formatter: default
+    class: logging.StreamHandler
+    stream: ext://sys.stderr
+    level: ERROR
+loggers:
+  errors:
+    level: ERROR
+    handlers:
+      - errors
+    propagate: no
+  default:
+    level: INFO
+    handlers:
+      - default
+    propagate: no
+root:
+  level: DEBUG
+  handlers:
+    - default
+    - errors
+  propagate: no

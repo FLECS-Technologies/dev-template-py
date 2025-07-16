@@ -11,7 +11,8 @@ copier copy gh:pyopensci/pyos-package-template
 
 You can read more about the project structure in [DEVELOPMENT](./DEVELOPMENT.md).
 
-The resulting project was filled with a simple example application.
+The resulting project was filled with a simple example application and extended with
+dockerization.
 
 ## Copyright
 
