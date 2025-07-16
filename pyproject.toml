@@ -30,10 +30,12 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Typing :: Typed",
 ]
-# TODO: add keywords
 keywords = []
-# TODO: add dependencies
-dependencies = []
+dependencies = [
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.23.0",
+    "pydantic>=2.11.7"
+]
 
 [project.urls]
 Homepage = "https://github.com/FLECS-Technologies/dev-template-py"
@@ -144,6 +146,14 @@ installer = "uv"
 ################################################################################
 # Hatch Environments
 ################################################################################
+
+#--------------- Start the server in dev environment ---------------#
+
+[tool.hatch.envs.dev]
+description = """Start the development server."""
+
+[tool.hatch.envs.dev.scripts]
+run = "uvicorn dev_template_py.server:app --reload --host 0.0.0.0 --port 8002"
 
 #--------------- Build and check your package ---------------#
 
