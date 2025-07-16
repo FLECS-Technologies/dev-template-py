@@ -112,6 +112,7 @@ ignore = [
 ]
 exclude = [
     "src/dev_template_py/_version.py",
+    "docs/conf.py",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]
