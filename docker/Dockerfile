@@ -18,7 +18,7 @@ FROM python:3.13-slim-bookworm AS installer
 
 RUN apt-get update && \
     apt-get --yes --no-install-recommends install \
-    pip && \
+    pip g++ make && \
     apt-get --yes clean && \
     rm -rf /var/lib/apt/lists/*
 
