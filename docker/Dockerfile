@@ -8,7 +8,9 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-COPY . .
+COPY ./src .
+COPY ./pyproject.toml .
+COPY ./README.md .
 
 RUN /root/.local/bin/hatch build
 
