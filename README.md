@@ -19,6 +19,9 @@ dockerization.
 - [CI/CD pipeline](#cicd-pipeline)
 - [Copyright](#copyright)
 
+This application is also used to demonstrate how to create a FLECS app
+here: [https://github.com/FLECS-Technologies/apps-tech.flecs.template-py](https://github.com/FLECS-Technologies/apps-tech.flecs.template-py)
+
 ## Quickstart
 
 1. Create a new repository by clicking on the `Use this template` button on the top
